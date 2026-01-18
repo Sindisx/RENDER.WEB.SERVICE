@@ -97,7 +97,7 @@ async function sendToDiscord(name, message) {
   const processedMessage = processMentions(message);
   const payload = {
     username: name,
-    content: `**${name}**: ${processedMessage}`
+    content: processedMessage
   };
 
   const res = await fetch(DISCORD_WEBHOOK_URL, {
