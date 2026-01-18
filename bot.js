@@ -10,12 +10,12 @@ function startBot() {
   });
 
   client.on("interactionCreate", async (interaction) => {
-    if (!interaction.isCommand()) return;
+    if (!interaction.isChatInputCommand()) return;
 
     const { commandName } = interaction;
 
     if (commandName === "ping") {
-      await interaction.reply("pong!");
+      await interaction.reply("Я жив, не ори");
     }
 
     if (commandName === "say") {

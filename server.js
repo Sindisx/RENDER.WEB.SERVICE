@@ -34,9 +34,6 @@ app.post('/upload', upload.array('files'), (req, res) => {
   res.send('Files uploaded successfully');
 });
 
-
-
-
 // Добавляем маршрут для отображения странички
 app.get('/games', (req, res) => {
   // Отправляем файл games.html из папки public
