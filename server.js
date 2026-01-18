@@ -43,13 +43,20 @@ async function deployCommands() {
   }
 }
 
-// Вызываем регистрацию команд при старте
 deployCommands();
 
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
+// Статические файлы из папки public
+app.use(express.static(path.join(__dirname, 'public')));
+app.get('/games', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'games.html'));
+});
+// Редирект на старый сайт
+app.get('/old-site', (req, res) => {
+  res.redirect(302, 'https://swkgstudio.github.io/');
+});
 
 const PORT = process.env.PORT || 3000;
 const server = app.listen(PORT, () => {
