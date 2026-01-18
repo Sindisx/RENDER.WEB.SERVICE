@@ -107,11 +107,16 @@ async function sendToDiscord(name, message) {
     }
   };
 
-  await fetch(DISCORD_WEBHOOK_URL, {
+  const res = await fetch(DISCORD_WEBHOOK_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
   });
+
+  if (!res.ok) {
+    const error = await res.text();
+    throw new Error(`Discord error: ${res.status} - ${error}`);
+  }
 }
 
 app.post("/webhook/chat", async (req, res) => {
