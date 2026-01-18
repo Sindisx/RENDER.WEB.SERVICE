@@ -98,14 +98,22 @@ function processMentions(text) {
 
 async function sendToDiscord(name, message) {
   const processedMessage = processMentions(message); // заменяем @на ID
+  
+  // Извлекаем только ID ролей из mentionMap
+  const roleIds = Object.values(mentionMap)
+    .filter(item => item.type === "role")
+    .map(item => item.id);
+
   const payload = {
     username: name,  // это имя будет "от кого" сообщение
     content: processedMessage,
     allowed_mentions: {
-      parse: ["roles"],
-      roles: Object.values(mentionMap) // Разрешаем упоминание всех ролей из mentionMap
+      parse: ["roles", "users"],
+      roles: roleIds
     }
   };
+
+  console.log("Sending to Discord:", JSON.stringify(payload, null, 2));
 
   const res = await fetch(DISCORD_WEBHOOK_URL, {
     method: "POST",
@@ -115,6 +123,7 @@ async function sendToDiscord(name, message) {
 
   if (!res.ok) {
     const error = await res.text();
+    console.error("Discord error response:", error);
     throw new Error(`Discord error: ${res.status} - ${error}`);
   }
 }
