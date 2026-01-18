@@ -103,7 +103,7 @@ app.post("/webhook/chat", async (req, res) => {
   const formattedMessage = `**${name}**: ${message}`;
 
   try {
-    await sendToDiscord(name, formattedMessage);
+    await sendToDiscord(name, message);
     res.json({ status: "ok" });
   } catch (err) {
     console.error(err);
