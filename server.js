@@ -78,7 +78,7 @@ app.get("/chat", (req, res) => {
 
 async function sendToDiscord(message) {
   const payload = {
-    username: "Web Chat",
+    username: "[Куратор] Похотливая Станция 1984",
     content: message
   };
 
