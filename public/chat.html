@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Web Chat</title>
+<link rel="stylesheet" href="chat.css">
+</head>
+<body>
+  <div class="chat-box">
+    <textarea id="message" placeholder="Написать что-нибудь..."></textarea>
+    <button id="send">Отправить</button>
+  </div>
+
+<script>
+document.getElementById("send").onclick = async () => {
+  const message = document.getElementById("message").value;
+
+  if (!message.trim()) return;
+
+  await fetch("/webhook/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message })
+  });
+
+  document.getElementById("message").value = "";
+};
+</script>
+</body>
+</html>

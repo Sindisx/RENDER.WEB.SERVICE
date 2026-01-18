@@ -76,10 +76,28 @@ app.get("/chat", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "chat.html"));
 });
 
+// Маппинг имен на Discord Role/User ID
+const mentionMap = {
+  "банда": "1234567890123456789", // Замените на реальный ID роли/пользователя
+  "админы": "0987654321098765432",
+  // Добавляйте новые упоминания по мере необходимости
+};
+
+function processMentions(text) {
+  // Заменяем @название на <@&ROLE_ID> или <@USER_ID>
+  let processed = text;
+  Object.entries(mentionMap).forEach(([name, id]) => {
+    const regex = new RegExp(`@${name}\\b`, 'gi');
+    processed = processed.replace(regex, `<@&${id}>`);
+  });
+  return processed;
+}
+
 async function sendToDiscord(name, message) {
+  const processedMessage = processMentions(message);
   const payload = {
     username: name,
-    content: message
+    content: `**${name}**: ${processedMessage}`
   };
 
   const res = await fetch(DISCORD_WEBHOOK_URL, {
@@ -99,8 +117,6 @@ app.post("/webhook/chat", async (req, res) => {
   if (!name || name.trim() === "" || !message || message.trim() === "") {
     return res.status(400).send("Имя и сообщение не могут быть пустыми");
   }
-
-  const formattedMessage = `**${name}**: ${message}`;
 
   try {
     await sendToDiscord(name, message);
