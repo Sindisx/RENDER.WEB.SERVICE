@@ -146,14 +146,3 @@ app.post("/webhook/chat", async (req, res) => {
 app.get('/', (req, res) => {
   res.send('Бот работает!');
 });
-
-const newData = req.body;
-// Записываем новые данные в файл nativeads.json
-fs.writeFile("nativeads.json", JSON.stringify(newData, null, 2), err => {
-  if (err) {
-    console.error("Error saving data:", err);
-    res.status(500).send("Error saving data");
-  } else {
-    res.send("Data saved successfully");
-  }
-});
