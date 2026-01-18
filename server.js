@@ -7,11 +7,12 @@ const http = require('http');
 const app = express();
 const fs = require('fs');
 
+require("dotenv").config();
+
 const { startBot } = require("./bot");
 startBot();
 
-
-const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1462398256632955047/6zIBGMyPKQH9VfqKK3mV4kTuQnNVFHNNpYPsI5Er_qkoN1JgFu0iLRQe1ScMrY9F3lWt";
+const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
