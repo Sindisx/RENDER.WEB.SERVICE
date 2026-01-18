@@ -78,7 +78,7 @@ app.get("/chat", (req, res) => {
 
 async function sendToDiscord(message) {
   const payload = {
-    username: "[Куратор] Похотливая Станция 1984",
+    username: name,
     content: message
   };
 
@@ -103,7 +103,7 @@ app.post("/webhook/chat", async (req, res) => {
   const formattedMessage = `**${name}**: ${message}`;
 
   try {
-    await sendToDiscord(formattedMessage);
+    await sendToDiscord(name, formattedMessage);
     res.json({ status: "ok" });
   } catch (err) {
     console.error(err);
