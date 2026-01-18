@@ -85,6 +85,9 @@ const mentionMap = {
 
 function processMentions(text) {
   // Заменяем @название на <@&ROLE_ID> или <@USER_ID>
+  if (!text || typeof text !== 'string') {
+    return text || '';
+  }
   let processed = text;
   Object.entries(mentionMap).forEach(([name, id]) => {
     const regex = new RegExp(`@${name}\\b`, 'gi');
