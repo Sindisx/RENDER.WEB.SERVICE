@@ -1,33 +1,19 @@
-<!-- <!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Redirecting...</title>
-<script>
-  // Перенаправление на указанный URL
-  window.location.href = 'https://swkgstudio.github.io/';
-</script>
-</head>
-<body>
-  <p>If you are not redirected, <a href="https://swkgstudio.github.io/">click here</a>.</p>
-</body>
-</html>
- -->
 
  <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<title>Web Chat</title>
+<title>Пилюлька-от-шизы</title>
 <link rel="stylesheet" href="chat.css">
 </head>
 <body>
-  <div class="chat-box">
-    <input id="name" type="text" placeholder="Ваше имя..." maxlength="50">
-    <textarea id="message" placeholder="Написать что-нибудь..."></textarea>
-    <button id="send">Отправить</button>
-  </div>
+
+<div class="chat-box">
+  <input id="name" type="text" placeholder="Ваше имя..." maxlength="50">
+  <textarea id="message" placeholder="Написать что-нибудь..." rows="4"></textarea>
+  <button id="send">Отправить</button>
+  <small>Используйте @банда, @sindband, для упоминаний</small>
+</div>
 
 <script>
 document.getElementById("send").onclick = async () => {
@@ -36,14 +22,26 @@ document.getElementById("send").onclick = async () => {
 
   if (!name || !message) return;
 
-  await fetch("/webhook/chat", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name, message })
-  });
+  try {
+    const response = await fetch("/webhook/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, message })
+    });
 
-  document.getElementById("message").value = "";
+    if (!response.ok) {
+      alert("Ошибка при отправке сообщения.");
+      return;
+    }
+
+    // Очищаем текстовое поле после отправки
+    document.getElementById("message").value = "";
+  } catch (err) {
+    console.error(err);
+    alert("Не удалось отправить сообщение.");
+  }
 };
 </script>
+
 </body>
 </html>

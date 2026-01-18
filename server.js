@@ -76,42 +76,38 @@ app.get("/chat", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "chat.html"));
 });
 
-// Маппинг имен на Discord Role/User ID
 const mentionMap = {
-  "банда": "1442400197950046289", // Замените на реальный ID роли/пользователя
-  "sindband": "1442107423891652741",
-  // Добавляйте новые упоминания по мере необходимости
+  "банда": { id: "1442400197950046289", type: "role" },
+  "sindband": { id: "1442107423891652741", type: "role" },
+  "sindisx": { id: "333194397023993859", type: "user" }
 };
 
 function processMentions(text) {
-  // Заменяем @название на <@&ROLE_ID> или <@USER_ID>
-  if (!text || typeof text !== 'string') {
-    return text || '';
-  }
+  if (!text || typeof text !== "string") return text || "";
+  
   let processed = text;
-  Object.entries(mentionMap).forEach(([name, id]) => {
-    const regex = new RegExp(`@${name}\\b`, 'gi');
-    processed = processed.replace(regex, `<@&${id}>`);
+
+  Object.entries(mentionMap).forEach(([name, {id, type}]) => {
+    const regex = new RegExp(`@${name}\\b`, "gi");
+    const mentionSyntax = type === "role" ? `<@&${id}>` : `<@${id}>`;
+    processed = processed.replace(regex, mentionSyntax);
   });
+
   return processed;
 }
 
 async function sendToDiscord(name, message) {
-  const processedMessage = processMentions(message);
+  const processedMessage = processMentions(message); // заменяем @на ID
   const payload = {
-    username: name,
+    username: name,  // это имя будет "от кого" сообщение
     content: processedMessage
   };
 
-  const res = await fetch(DISCORD_WEBHOOK_URL, {
+  await fetch(DISCORD_WEBHOOK_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
   });
-
-  if (!res.ok) {
-    throw new Error("Discord отверг сообщение");
-  }
 }
 
 app.post("/webhook/chat", async (req, res) => {
