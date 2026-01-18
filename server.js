@@ -6,6 +6,11 @@ const fetch = require("node-fetch");
 const http = require('http');
 const app = express();
 const fs = require('fs');
+
+const { startBot } = require("./bot");
+startBot();
+
+
 const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1462398256632955047/6zIBGMyPKQH9VfqKK3mV4kTuQnNVFHNNpYPsI5Er_qkoN1JgFu0iLRQe1ScMrY9F3lWt";
 
 app.use(express.json());
@@ -27,6 +32,9 @@ app.post('/upload', upload.array('files'), (req, res) => {
   console.log('Uploaded files:', req.files);
   res.send('Files uploaded successfully');
 });
+
+
+
 
 // Добавляем маршрут для отображения странички
 app.get('/games', (req, res) => {
