@@ -78,8 +78,8 @@ app.get("/chat", (req, res) => {
 
 // Маппинг имен на Discord Role/User ID
 const mentionMap = {
-  "банда": "1234567890123456789", // Замените на реальный ID роли/пользователя
-  "админы": "0987654321098765432",
+  "банда": "1442400197950046289", // Замените на реальный ID роли/пользователя
+  "sindband": "1442107423891652741",
   // Добавляйте новые упоминания по мере необходимости
 };
 
@@ -119,7 +119,7 @@ app.post("/webhook/chat", async (req, res) => {
   }
 
   try {
-    await sendToDiscord(name, message);
+    await sendToDiscord(message);
     res.json({ status: "ok" });
   } catch (err) {
     console.error(err);
