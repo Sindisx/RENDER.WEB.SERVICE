@@ -1,36 +1,28 @@
-const { REST, Routes } = require("discord.js");
-require("dotenv").config();
+require('dotenv').config();
+const { REST, Routes, SlashCommandBuilder } = require('discord.js');
 
 const commands = [
-  {
-    name: "ping",
-    description: "Проверка связи"
-  },
-  {
-    name: "say",
-    description: "Бот скажет что-то",
-    options: [
-      {
-        name: "text",
-        type: 3, // STRING
-        description: "Текст для отправки",
-        required: true
-      }
-    ]
-  }
-];
+    new SlashCommandBuilder()
+        .setName('ping')
+        .setDescription('Проверка бота'),
+].map(cmd => cmd.toJSON());
 
-const rest = new REST({ version: "10" }).setToken(process.env.BOT_TOKEN);
+const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
 
 (async () => {
-  try {
-    console.log("Регистрация команд...");
-    await rest.put(
-      Routes.applicationCommands(process.env.CLIENT_ID),
-      { body: commands }
-    );
-    console.log("Команды зарегистрированы ✅");
-  } catch (err) {
-    console.error(err);
-  }
+    try {
+        console.log('Регистрирую команды...');
+
+        await rest.put(
+            Routes.applicationGuildCommands(
+                process.env.CLIENT_ID,
+                process.env.GUILD_ID
+            ),
+            { body: commands }
+        );
+
+        console.log('Команды успешно зарегистрированы');
+    } catch (error) {
+        console.error(error);
+    }
 })();
