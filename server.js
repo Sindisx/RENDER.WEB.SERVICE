@@ -100,7 +100,11 @@ async function sendToDiscord(name, message) {
   const processedMessage = processMentions(message); // заменяем @на ID
   const payload = {
     username: name,  // это имя будет "от кого" сообщение
-    content: processedMessage
+    content: processedMessage,
+    allowed_mentions: {
+      parse: ["roles"],
+      roles: Object.values(mentionMap) // Разрешаем упоминание всех ролей из mentionMap
+    }
   };
 
   await fetch(DISCORD_WEBHOOK_URL, {
