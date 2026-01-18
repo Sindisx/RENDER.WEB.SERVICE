@@ -76,7 +76,7 @@ app.get("/chat", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "chat.html"));
 });
 
-async function sendToDiscord(message) {
+async function sendToDiscord(name, message) {
   const payload = {
     username: name,
     content: message
