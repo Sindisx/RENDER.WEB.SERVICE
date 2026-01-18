@@ -1,9 +1,9 @@
 
 const express = require('express');
+const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
 const fetch = require("node-fetch");
-const http = require('http');
 const app = express();
 const fs = require('fs');
 
@@ -14,6 +14,7 @@ startBot();
 
 const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL;
 
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -27,7 +28,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-app.use(express.static('public')); // Папка со статическими файлами
+app.use(express.static(path.join(__dirname, 'public'))); // Папка со статическими файлами
 
 app.post('/upload', upload.array('files'), (req, res) => {
   console.log('Uploaded files:', req.files);
@@ -40,18 +41,25 @@ app.get('/games', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'games.html'));
 });
 
-const server = http.createServer((req, res) => {
-  // Redirect to the specified URL
-  res.writeHead(302, { 'Location': 'https://swkgstudio.github.io/' });
-  res.end();
+// Редирект на старый сайт через Express
+app.get('/old-site', (req, res) => {
+  res.redirect(302, 'https://swkgstudio.github.io/');
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
 
-app.get('/nativeads', (req, res) => {
+// Автопинг для предотвращения засыпания на Render (каждые 25 минут)
+setInterval(() => {
+  const baseUrl = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
+  fetch(baseUrl)
+    .then(() => console.log(`[${new Date().toISOString()}] Автопинг выполнен`))
+    .catch(err => console.error(`[${new Date().toISOString()}] Ошибка автопинга:`, err.message));
+}, 25 * 60 * 1000);
+
+/* app.get('/nativeads', (req, res) => {
   fs.readFile('nativeads.json', 'utf8', (err, data) => {
       if (err) {
           console.error(err);
@@ -60,9 +68,9 @@ app.get('/nativeads', (req, res) => {
       }
       res.json(JSON.parse(data));
   });
-});
+}); */
 
-app.post('/nativeads', async (req, res) => {
+/*app.post('/nativeads', async (req, res) => {
   try {
       const newData = req.body;
       await fs.writeFile('nativeads.json', JSON.stringify(newData, null, 2));
@@ -77,6 +85,7 @@ app.get("/nativeadssite", (req, res) => {
 const filePath = path.join(__dirname, "nativeads.html");
 res.sendFile(filePath);
 });
+*/
 
 app.get("/chat", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "chat.html"));
@@ -154,7 +163,14 @@ app.post("/webhook/chat", async (req, res) => {
   }
 });
 
-app.get("/native_ads_load.php", (req, res) => {
+
+// 1. Создаем мини-сервер для Render
+app.get('/', (req, res) => {
+  res.send('Бот работает!');
+});
+
+
+/* app.get("/native_ads_load.php", (req, res) => {
 // Читаем содержимое файла nativeads.json
 fs.readFile("nativeads.json", "utf8", (err, data) => {
   if (err) {
@@ -167,8 +183,8 @@ fs.readFile("nativeads.json", "utf8", (err, data) => {
   }
 });
 });
-
-app.post("/native_ads_save.php", (req, res) => {
+ */
+/* app.post("/native_ads_save.php", (req, res) => {
 const newData = req.body;
 // Записываем новые данные в файл nativeads.json
 fs.writeFile("nativeads.json", JSON.stringify(newData, null, 2), err => {
@@ -179,4 +195,4 @@ fs.writeFile("nativeads.json", JSON.stringify(newData, null, 2), err => {
     res.send("Data saved successfully");
   }
 });
-});
+}); */
