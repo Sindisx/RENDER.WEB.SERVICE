@@ -104,12 +104,16 @@ async function sendToDiscord(name, message) {
     .filter(item => item.type === "role")
     .map(item => item.id);
 
+  const userIds = Object.values(mentionMap)
+    .filter(item => item.type === "user")
+    .map(item => item.id);
+
   const payload = {
     username: name,  // это имя будет "от кого" сообщение
     content: processedMessage,
     allowed_mentions: {
-      parse: ["roles", "users"],
-      roles: roleIds
+      roles: roleIds,
+      users: userIds
     }
   };
 
