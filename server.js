@@ -1,5 +1,3 @@
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
 const express = require('express');
 const multer = require('multer');
@@ -9,6 +7,8 @@ const app = express();
 const fs = require('fs');
 const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1462398256632955047/6zIBGMyPKQH9VfqKK3mV4kTuQnNVFHNNpYPsI5Er_qkoN1JgFu0iLRQe1ScMrY9F3lWt";
 
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 
 const storage = multer.diskStorage({
