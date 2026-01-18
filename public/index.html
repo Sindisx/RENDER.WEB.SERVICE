@@ -24,20 +24,22 @@
 </head>
 <body>
   <div class="chat-box">
+    <input id="name" type="text" placeholder="Ваше имя..." maxlength="50">
     <textarea id="message" placeholder="Написать что-нибудь..."></textarea>
     <button id="send">Отправить</button>
   </div>
 
 <script>
 document.getElementById("send").onclick = async () => {
-  const message = document.getElementById("message").value;
+  const name = document.getElementById("name").value.trim();
+  const message = document.getElementById("message").value.trim();
 
-  if (!message.trim()) return;
+  if (!name || !message) return;
 
   await fetch("/webhook/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message })
+    body: JSON.stringify({ name, message })
   });
 
   document.getElementById("message").value = "";

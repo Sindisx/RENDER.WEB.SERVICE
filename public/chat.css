@@ -19,6 +19,22 @@ body {
   gap: 10px;
 }
 
+input[type="text"] {
+  height: 40px;
+  background: #1c1c1c;
+  color: #fff;
+  border: 1px solid #3a3a3a;
+  border-radius: 8px;
+  padding: 10px;
+  outline: none;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 14px;
+}
+
+input[type="text"]:focus {
+  border-color: #3a86ff;
+}
+
 textarea {
   resize: none;
   height: 100px;

@@ -94,14 +94,16 @@ async function sendToDiscord(message) {
 }
 
 app.post("/webhook/chat", async (req, res) => {
-  const { message } = req.body;
+  const { name, message } = req.body;
 
-  if (!message || message.trim() === "") {
-    return res.status(400).send("Пустота — не сообщение");
+  if (!name || name.trim() === "" || !message || message.trim() === "") {
+    return res.status(400).send("Имя и сообщение не могут быть пустыми");
   }
 
+  const formattedMessage = `**${name}**: ${message}`;
+
   try {
-    await sendToDiscord(message);
+    await sendToDiscord(formattedMessage);
     res.json({ status: "ok" });
   } catch (err) {
     console.error(err);
