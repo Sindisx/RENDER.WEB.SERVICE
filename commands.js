@@ -1,4 +1,5 @@
 const { SlashCommandBuilder } = require('discord.js');
+const { sendMessageToChannel } = require('./bot');
 
 /**
  * Список всех доступных слэш-команд бота
@@ -54,5 +55,6 @@ function getCommandHandler(commandName) {
 module.exports = {
   commands,
   getCommandsData,
-  getCommandHandler
+  getCommandHandler,
+  sendMessageToChannel
 };

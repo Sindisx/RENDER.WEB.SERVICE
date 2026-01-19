@@ -25,8 +25,8 @@
       <label for="name">От кого:</label>
       <div class="author-selector">
         <input id="name" type="text" placeholder="Ваше имя или Бот..." maxlength="50">
-        <label class="toggle-container" title="Включить/выключить отправку от Бота">
-          <input type="checkbox" id="fromBotToggle">
+        <label class="toggle-container" title="Отправить от Бота (вместо вебхука)">
+          <input type="checkbox" id="useBot">
           <span class="toggle-label">От Бота</span>
         </label>
       </div>
@@ -84,7 +84,7 @@ document.getElementById("send").onclick = async () => {
   const name = document.getElementById("name").value.trim();
   const message = document.getElementById("message").value.trim();
   const chatId = document.getElementById("chatSelect").value;
-  const fromBot = document.getElementById("fromBotToggle").checked;
+  const useBot = document.getElementById("useBot").checked;
   const statusMessage = document.getElementById("statusMessage");
 
   if (!name || !message) {
@@ -101,11 +101,12 @@ document.getElementById("send").onclick = async () => {
     const response = await fetch("/webhook/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, message, chatId, fromBot })
+      body: JSON.stringify({ name, message, chatId, useBot })
     });
 
     if (!response.ok) {
-      throw new Error("Ошибка при отправке сообщения");
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Ошибка при отправке сообщения");
     }
 
     showStatus("✅ Сообщение отправлено!", "success");
@@ -119,7 +120,7 @@ document.getElementById("send").onclick = async () => {
     }, 3000);
   } catch (err) {
     console.error(err);
-    showStatus("❌ Не удалось отправить сообщение", "error");
+    showStatus("❌ " + err.message, "error");
   }
 };
 

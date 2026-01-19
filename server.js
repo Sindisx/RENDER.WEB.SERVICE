@@ -10,7 +10,7 @@ const fs = require('fs');
 require("dotenv").config();
 
 const { REST, Routes } = require('discord.js');
-const { getCommandsData } = require('./commands');
+const { getCommandsData, sendMessageToChannel } = require('./commands');
 
 const { startBot } = require("./bot");
 startBot();
@@ -20,17 +20,19 @@ startBot();
 function loadWebhooks() {
   const webhooks = {};
   const defaultWebhookUrl = process.env.DISCORD_WEBHOOK_URL;
+  const defaultChannelId = process.env.DISCORD_CHANNEL_ID;
   
   // Основной вебхук
   webhooks.main = {
     id: 'main',
     name: process.env.WEBHOOK_MAIN_NAME || 'Основной канал',
-    url: defaultWebhookUrl,
+    webhookUrl: defaultWebhookUrl,
+    channelId: defaultChannelId,
     botName: 'Бот'
   };
 
   // Загружаем дополнительные вебхуки из переменных окружения
-  // Формат переменной: WEBHOOK_KEY_NAME и WEBHOOK_KEY_URL
+  // Формат переменной: WEBHOOK_KEY_NAME, WEBHOOK_KEY_URL, WEBHOOK_KEY_CHANNEL_ID
   const envKeys = Object.keys(process.env);
   const webhookKeys = new Set();
   
@@ -44,11 +46,13 @@ function loadWebhooks() {
   webhookKeys.forEach(key => {
     const url = process.env[`WEBHOOK_${key}_URL`];
     const name = process.env[`WEBHOOK_${key}_NAME`] || key;
+    const channelId = process.env[`WEBHOOK_${key}_CHANNEL_ID`];
     if (url) {
       webhooks[key.toLowerCase()] = {
         id: key.toLowerCase(),
         name: name,
-        url: url,
+        webhookUrl: url,
+        channelId: channelId,
         botName: `Бот_${key}`
       };
     }
@@ -136,15 +140,37 @@ function processMentions(text) {
   return processed;
 }
 
-async function sendToDiscord(name, message, webhookKey = 'main', fromBot = false) {
+async function sendToDiscord(name, message, webhookKey = 'main', useBot = false) {
   const webhook = WEBHOOKS[webhookKey];
   
-  if (!webhook || !webhook.url) {
-    throw new Error(`Вебхук '${webhookKey}' не найден`);
+  if (!webhook) {
+    throw new Error(`Чат '${webhookKey}' не найден`);
   }
 
-  const processedMessage = processMentions(message); // заменяем @на ID
-  
+  const processedMessage = processMentions(message); // заменяем @ на упоминания
+
+  // Если используем бота
+  if (useBot) {
+    if (!webhook.channelId) {
+      throw new Error(`Для канала '${webhookKey}' не задан ID канала. Используйте WEBHOOK_${webhookKey.toUpperCase()}_CHANNEL_ID`);
+    }
+
+    try {
+      const { sendMessageToChannel } = require('./bot');
+      const sentMessage = await sendMessageToChannel(webhook.channelId, processedMessage);
+      console.log(`Сообщение отправлено ботом в канал ${webhook.channelId}`);
+      return sentMessage;
+    } catch (error) {
+      console.error("Ошибка при отправке через бота:", error);
+      throw new Error(`Не удалось отправить сообщение через бота: ${error.message}`);
+    }
+  }
+
+  // Используем вебхук
+  if (!webhook.webhookUrl) {
+    throw new Error(`Для канала '${webhookKey}' не задан вебхук URL`);
+  }
+
   // Извлекаем только ID ролей из mentionMap
   const roleIds = Object.values(mentionMap)
     .filter(item => item.type === "role")
@@ -154,11 +180,8 @@ async function sendToDiscord(name, message, webhookKey = 'main', fromBot = false
     .filter(item => item.type === "user")
     .map(item => item.id);
 
-  // Если флаг fromBot = true, используем имя бота, иначе используем переданное имя (как от вебхука)
-  const username = fromBot ? webhook.botName : name;
-
   const payload = {
-    username: username,  // это имя будет "от кого" сообщение
+    username: name,  // это имя будет "от кого" сообщение
     content: processedMessage,
     allowed_mentions: {
       roles: roleIds,
@@ -166,9 +189,9 @@ async function sendToDiscord(name, message, webhookKey = 'main', fromBot = false
     }
   };
 
-  console.log("Sending to Discord:", JSON.stringify(payload, null, 2));
+  console.log("Sending to Discord via webhook:", JSON.stringify(payload, null, 2));
 
-  const res = await fetch(webhook.url, {
+  const res = await fetch(webhook.webhookUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
@@ -182,18 +205,18 @@ async function sendToDiscord(name, message, webhookKey = 'main', fromBot = false
 }
 
 app.post("/webhook/chat", async (req, res) => {
-  const { name, message, chatId, fromBot } = req.body;
+  const { name, message, chatId, useBot } = req.body;
 
   if (!name || name.trim() === "" || !message || message.trim() === "") {
     return res.status(400).send("Имя и сообщение не могут быть пустыми");
   }
 
   try {
-    await sendToDiscord(name, message, chatId || 'main', fromBot || false);
+    await sendToDiscord(name, message, chatId || 'main', useBot || false);
     res.json({ status: "ok" });
   } catch (err) {
     console.error(err);
-    res.status(500).send("Не долетело");
+    res.status(500).json({ status: "error", message: err.message });
   }
 });
 

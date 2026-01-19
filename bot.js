@@ -2,14 +2,16 @@
 const { Client, GatewayIntentBits } = require("discord.js");
 require("dotenv").config();
 
-function startBot() {
-  const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+let botClient = null;
 
-  client.on("ready", () => {
-    console.log(`Бот в сети! Username: ${client.user.tag}`);
+function startBot() {
+  botClient = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.DirectMessages] });
+
+  botClient.on("ready", () => {
+    console.log(`Бот в сети! Username: ${botClient.user.tag}`);
   });
 
-  client.on("interactionCreate", async (interaction) => {
+  botClient.on("interactionCreate", async (interaction) => {
     if (!interaction.isChatInputCommand()) return;
 
     const { commandName } = interaction;
@@ -24,7 +26,31 @@ function startBot() {
     }
   });
 
-  client.login(process.env.BOT_TOKEN);
+  botClient.login(process.env.BOT_TOKEN);
 }
 
-module.exports = { startBot };
+// Функция для отправки сообщения через бота в канал
+async function sendMessageToChannel(channelId, message) {
+  if (!botClient) {
+    throw new Error("Бот не инициализирован");
+  }
+  
+  try {
+    const channel = await botClient.channels.fetch(channelId);
+    if (!channel) {
+      throw new Error(`Канал ${channelId} не найден`);
+    }
+    
+    const sentMessage = await channel.send(message);
+    return sentMessage;
+  } catch (error) {
+    console.error("Ошибка при отправке сообщения:", error);
+    throw error;
+  }
+}
+
+module.exports = { 
+  startBot,
+  getBotClient: () => botClient,
+  sendMessageToChannel
+};
