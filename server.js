@@ -16,6 +16,21 @@ startBot();
 
 const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL;
 
+// Список доступных вебхуков для разных чатов/каналов
+const WEBHOOKS = {
+  main: {
+    name: 'Основной канал',
+    url: process.env.DISCORD_WEBHOOK_URL,
+    botName: 'Бот'
+  },
+  // Добавьте дополнительные вебхуки здесь по мере необходимости
+  // announcements: {
+  //   name: 'Объявления',
+  //   url: process.env.DISCORD_WEBHOOK_ANNOUNCEMENTS,
+  //   botName: 'БотОбъявления'
+  // }
+};
+
 // Регистрация Discord слэш-команд
 async function deployCommands() {
   try {
@@ -97,7 +112,13 @@ function processMentions(text) {
   return processed;
 }
 
-async function sendToDiscord(name, message) {
+async function sendToDiscord(name, message, webhookKey = 'main') {
+  const webhook = WEBHOOKS[webhookKey];
+  
+  if (!webhook || !webhook.url) {
+    throw new Error(`Вебхук '${webhookKey}' не найден`);
+  }
+
   const processedMessage = processMentions(message); // заменяем @на ID
   
   // Извлекаем только ID ролей из mentionMap
@@ -120,7 +141,7 @@ async function sendToDiscord(name, message) {
 
   console.log("Sending to Discord:", JSON.stringify(payload, null, 2));
 
-  const res = await fetch(DISCORD_WEBHOOK_URL, {
+  const res = await fetch(webhook.url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
@@ -134,19 +155,28 @@ async function sendToDiscord(name, message) {
 }
 
 app.post("/webhook/chat", async (req, res) => {
-  const { name, message } = req.body;
+  const { name, message, chatId } = req.body;
 
   if (!name || name.trim() === "" || !message || message.trim() === "") {
     return res.status(400).send("Имя и сообщение не могут быть пустыми");
   }
 
   try {
-    await sendToDiscord(name, message);
+    await sendToDiscord(name, message, chatId || 'main');
     res.json({ status: "ok" });
   } catch (err) {
     console.error(err);
     res.status(500).send("Не долетело");
   }
+});
+
+// API для получения списка доступных чатов
+app.get("/api/chats", (req, res) => {
+  const chats = Object.entries(WEBHOOKS).map(([key, value]) => ({
+    id: key,
+    name: value.name
+  }));
+  res.json(chats);
 });
 
 

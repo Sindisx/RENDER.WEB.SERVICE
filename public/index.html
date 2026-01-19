@@ -8,39 +8,127 @@
 </head>
 <body>
 
-<div class="chat-box">
-  <input id="name" type="text" placeholder="Ваше имя..." maxlength="50">
-  <textarea id="message" placeholder="Написать что-нибудь..." rows="4"></textarea>
-  <button id="send">Отправить</button>
-  <small>Используйте @банда, @sindband, для упоминаний</small>
+<div class="chat-container">
+  <h1>💬 Чат с Ботом</h1>
+
+  <!-- Выкидной список для выбора чата -->
+  <div class="chat-selector">
+    <label for="chatSelect">Выберите чат/канал:</label>
+    <select id="chatSelect">
+      <option value="">Загрузка...</option>
+    </select>
+  </div>
+
+  <!-- Основное окно чата -->
+  <div class="chat-box">
+    <div class="form-group">
+      <label for="name">От кого:</label>
+      <input id="name" type="text" placeholder="Ваше имя или Бот..." maxlength="50">
+    </div>
+
+    <div class="form-group">
+      <label for="message">Сообщение:</label>
+      <textarea id="message" placeholder="Написать что-нибудь..." rows="4"></textarea>
+    </div>
+
+    <button id="send">📤 Отправить</button>
+
+    <div class="hint">
+      💡 Используйте <code>@банда</code>, <code>@sindband</code> для упоминаний
+    </div>
+
+    <div id="statusMessage" class="status-message"></div>
+  </div>
 </div>
 
 <script>
+// Загружаем список доступных чатов при загрузке страницы
+async function loadChats() {
+  try {
+    const response = await fetch("/api/chats");
+    const chats = await response.json();
+
+    const chatSelect = document.getElementById("chatSelect");
+    chatSelect.innerHTML = ""; // Очищаем предыдущие опции
+
+    if (chats.length === 0) {
+      chatSelect.innerHTML = '<option value="">Чаты не найдены</option>';
+      return;
+    }
+
+    chats.forEach(chat => {
+      const option = document.createElement("option");
+      option.value = chat.id;
+      option.textContent = chat.name;
+      chatSelect.appendChild(option);
+    });
+
+    // Устанавливаем первый чат по умолчанию
+    if (chats.length > 0) {
+      chatSelect.value = chats[0].id;
+    }
+  } catch (err) {
+    console.error("Ошибка при загрузке чатов:", err);
+    document.getElementById("chatSelect").innerHTML = '<option value="">Ошибка загрузки</option>';
+  }
+}
+
+// Отправка сообщения
 document.getElementById("send").onclick = async () => {
   const name = document.getElementById("name").value.trim();
   const message = document.getElementById("message").value.trim();
+  const chatId = document.getElementById("chatSelect").value;
+  const statusMessage = document.getElementById("statusMessage");
 
-  if (!name || !message) return;
+  if (!name || !message) {
+    showStatus("Пожалуйста, заполните имя и сообщение", "error");
+    return;
+  }
+
+  if (!chatId) {
+    showStatus("Пожалуйста, выберите чат", "error");
+    return;
+  }
 
   try {
     const response = await fetch("/webhook/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, message })
+      body: JSON.stringify({ name, message, chatId })
     });
 
     if (!response.ok) {
-      alert("Ошибка при отправке сообщения.");
-      return;
+      throw new Error("Ошибка при отправке сообщения");
     }
+
+    showStatus("✅ Сообщение отправлено!", "success");
 
     // Очищаем текстовое поле после отправки
     document.getElementById("message").value = "";
+
+    // Скрываем статус через 3 секунды
+    setTimeout(() => {
+      statusMessage.classList.remove("success");
+    }, 3000);
   } catch (err) {
     console.error(err);
-    alert("Не удалось отправить сообщение.");
+    showStatus("❌ Не удалось отправить сообщение", "error");
   }
 };
+
+// Функция для показа статуса
+function showStatus(message, type) {
+  const statusMessage = document.getElementById("statusMessage");
+  statusMessage.textContent = message;
+  statusMessage.classList.remove("success", "error");
+  statusMessage.classList.add(type);
+}
+
+// Загружаем чаты при загрузке страницы
+loadChats();
+
+// Опционально: перезагружаем список чатов каждые 30 секунд
+setInterval(loadChats, 30 * 1000);
 </script>
 
 </body>
