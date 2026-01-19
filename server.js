@@ -9,36 +9,60 @@ const fs = require('fs');
 
 require("dotenv").config();
 
-const { REST, Routes, SlashCommandBuilder } = require('discord.js');
+const { REST, Routes } = require('discord.js');
+const { getCommandsData } = require('./commands');
 
 const { startBot } = require("./bot");
 startBot();
 
-const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL;
-
-// Список доступных вебхуков для разных чатов/каналов
-const WEBHOOKS = {
-  main: {
-    name: 'Основной канал',
-    url: process.env.DISCORD_WEBHOOK_URL,
+// Загружаем вебхуки из переменных окружения
+// Ожидается формат: WEBHOOK_MAIN=https://..., WEBHOOK_SUPPORT=https://..., и т.д.
+function loadWebhooks() {
+  const webhooks = {};
+  const defaultWebhookUrl = process.env.DISCORD_WEBHOOK_URL;
+  
+  // Основной вебхук
+  webhooks.main = {
+    id: 'main',
+    name: process.env.WEBHOOK_MAIN_NAME || 'Основной канал',
+    url: defaultWebhookUrl,
     botName: 'Бот'
-  },
-  // Добавьте дополнительные вебхуки здесь по мере необходимости
-  // announcements: {
-  //   name: 'Объявления',
-  //   url: process.env.DISCORD_WEBHOOK_ANNOUNCEMENTS,
-  //   botName: 'БотОбъявления'
-  // }
-};
+  };
+
+  // Загружаем дополнительные вебхуки из переменных окружения
+  // Формат переменной: WEBHOOK_KEY_NAME и WEBHOOK_KEY_URL
+  const envKeys = Object.keys(process.env);
+  const webhookKeys = new Set();
+  
+  envKeys.forEach(key => {
+    const match = key.match(/^WEBHOOK_(\w+)_URL$/);
+    if (match) {
+      webhookKeys.add(match[1]);
+    }
+  });
+
+  webhookKeys.forEach(key => {
+    const url = process.env[`WEBHOOK_${key}_URL`];
+    const name = process.env[`WEBHOOK_${key}_NAME`] || key;
+    if (url) {
+      webhooks[key.toLowerCase()] = {
+        id: key.toLowerCase(),
+        name: name,
+        url: url,
+        botName: `Бот_${key}`
+      };
+    }
+  });
+
+  return webhooks;
+}
+
+const WEBHOOKS = loadWebhooks();
 
 // Регистрация Discord слэш-команд
 async function deployCommands() {
   try {
-    const commands = [
-        new SlashCommandBuilder()
-            .setName('ping')
-            .setDescription('Проверка бота'),
-    ].map(cmd => cmd.toJSON());
+    const commands = getCommandsData();
 
     const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
 
@@ -112,7 +136,7 @@ function processMentions(text) {
   return processed;
 }
 
-async function sendToDiscord(name, message, webhookKey = 'main') {
+async function sendToDiscord(name, message, webhookKey = 'main', fromBot = false) {
   const webhook = WEBHOOKS[webhookKey];
   
   if (!webhook || !webhook.url) {
@@ -130,8 +154,11 @@ async function sendToDiscord(name, message, webhookKey = 'main') {
     .filter(item => item.type === "user")
     .map(item => item.id);
 
+  // Если флаг fromBot = true, используем имя бота, иначе используем переданное имя (как от вебхука)
+  const username = fromBot ? webhook.botName : name;
+
   const payload = {
-    username: name,  // это имя будет "от кого" сообщение
+    username: username,  // это имя будет "от кого" сообщение
     content: processedMessage,
     allowed_mentions: {
       roles: roleIds,
@@ -155,14 +182,14 @@ async function sendToDiscord(name, message, webhookKey = 'main') {
 }
 
 app.post("/webhook/chat", async (req, res) => {
-  const { name, message, chatId } = req.body;
+  const { name, message, chatId, fromBot } = req.body;
 
   if (!name || name.trim() === "" || !message || message.trim() === "") {
     return res.status(400).send("Имя и сообщение не могут быть пустыми");
   }
 
   try {
-    await sendToDiscord(name, message, chatId || 'main');
+    await sendToDiscord(name, message, chatId || 'main', fromBot || false);
     res.json({ status: "ok" });
   } catch (err) {
     console.error(err);

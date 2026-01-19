@@ -23,7 +23,13 @@
   <div class="chat-box">
     <div class="form-group">
       <label for="name">От кого:</label>
-      <input id="name" type="text" placeholder="Ваше имя или Бот..." maxlength="50">
+      <div class="author-selector">
+        <input id="name" type="text" placeholder="Ваше имя или Бот..." maxlength="50">
+        <label class="toggle-container" title="Включить/выключить отправку от Бота">
+          <input type="checkbox" id="fromBotToggle">
+          <span class="toggle-label">От Бота</span>
+        </label>
+      </div>
     </div>
 
     <div class="form-group">
@@ -78,6 +84,7 @@ document.getElementById("send").onclick = async () => {
   const name = document.getElementById("name").value.trim();
   const message = document.getElementById("message").value.trim();
   const chatId = document.getElementById("chatSelect").value;
+  const fromBot = document.getElementById("fromBotToggle").checked;
   const statusMessage = document.getElementById("statusMessage");
 
   if (!name || !message) {
@@ -94,7 +101,7 @@ document.getElementById("send").onclick = async () => {
     const response = await fetch("/webhook/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, message, chatId })
+      body: JSON.stringify({ name, message, chatId, fromBot })
     });
 
     if (!response.ok) {
