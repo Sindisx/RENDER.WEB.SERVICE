@@ -7,7 +7,14 @@ const fetch = require("node-fetch");
 const app = express();
 const fs = require('fs');
 
-require("dotenv").config();
+// Загружаем .env файл
+// На Render.com Secret Files хранятся в /etc/secrets/.env
+// Локально - из корневого .env
+const envPath = process.env.NODE_ENV === 'production' && fs.existsSync('/etc/secrets/.env')
+  ? '/etc/secrets/.env'
+  : '.env';
+
+require("dotenv").config({ path: envPath });
 
 const { REST, Routes } = require('discord.js');
 const { getCommandsData, sendMessageToChannel } = require('./commands');

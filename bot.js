@@ -1,6 +1,15 @@
 // bot.js
+const fs = require('fs');
 const { Client, GatewayIntentBits } = require("discord.js");
-require("dotenv").config();
+
+// Загружаем .env файл
+// На Render.com Secret Files хранятся в /etc/secrets/.env
+// Локально - из корневого .env
+const envPath = process.env.NODE_ENV === 'production' && fs.existsSync('/etc/secrets/.env')
+  ? '/etc/secrets/.env'
+  : '.env';
+
+require("dotenv").config({ path: envPath });
 
 let botClient = null;
 
